@@ -5,7 +5,7 @@ from .base_landing import LandingProtocolBase
 
 class SimpleLanding(LandingProtocolBase):
     """Simple landing protocol that directly lands the drone."""
-    
+
     def land(self, tello, **kwargs):
         """Execute simple landing by directly calling tello.land()."""
         logging.info("Executing simple landing protocol.")

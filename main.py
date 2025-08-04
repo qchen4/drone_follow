@@ -62,7 +62,7 @@ class TelloTargetFollower:
 
         self.running = True
         self.frame_read = None
-        
+
         # Initialize visual thread
         self.visual_thread = VisualThread(visual_protocol)
 
@@ -70,7 +70,7 @@ class TelloTargetFollower:
         # Initialize OpenCV window in main thread if needed
         if hasattr(self.visual_protocol, 'initialize_window'):
             self.visual_protocol.initialize_window()
-        
+
         self.visual_thread.start()  # Start visualization in separate thread
         try:
             self._takeoff_and_stabilize()
@@ -86,7 +86,7 @@ class TelloTargetFollower:
                 found, error, debug = self.tracker.process_frame(frame)
                 debug["stage"] = "control"
                 self._draw_cross(frame)
-                
+
                 # Draw tracker-specific debug info (boundary annotations)
                 if hasattr(self.tracker, 'draw_debug_info'):
                     self.tracker.draw_debug_info(frame, debug)
@@ -95,7 +95,7 @@ class TelloTargetFollower:
                 if self.visual_thread.is_alive():
                     self.visual_thread.frame = frame
                     self.visual_thread.debug = debug
-                
+
                 # Update OpenCV window in main thread to avoid threading issues
                 if hasattr(self.visual_protocol, '_display_frame'):
                     self.visual_protocol._display_frame()
@@ -120,35 +120,35 @@ class TelloTargetFollower:
             if self.frame_read is None:
                 logging.warning("Frame reader is None")
                 return None
-                
+
             frame = self.frame_read.frame
             if frame is None:
                 return None
-                
+
             # Get frame dimensions
             h, w = frame.shape[:2]
-            
+
             # Check for significant frame size changes (camera mode switch)
             if not hasattr(self, '_last_frame_shape'):
                 self._last_frame_shape = frame.shape
             elif frame.shape != self._last_frame_shape:
                 logging.warning(f"Frame size changed from {self._last_frame_shape} to {frame.shape} - camera mode may have switched")
                 self._last_frame_shape = frame.shape
-            
+
             logging.debug(f"Raw frame shape: {frame.shape}")
-            
+
             # Crop to ROI (ensure we don't exceed frame dimensions)
             crop_h = min(240, h)
             crop_w = min(320, w)
             cropped = frame[0:crop_h, 0:crop_w]
             logging.debug(f"Cropped frame shape: {cropped.shape}")
-            
+
             # Transpose if needed (depends on camera orientation)
             transposed = cv2.transpose(cropped)
             logging.debug(f"Transposed frame shape: {transposed.shape}")
-            
+
             return transposed
-            
+
         except Exception as e:
             logging.error(f"Frame processing error: {e}")
             return None

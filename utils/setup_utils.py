@@ -46,7 +46,7 @@ def select_tracker(tello_connector):
         max_radius = _prompt_int("Max circle radius", 100)
         param1 = _prompt_int("Edge detection sensitivity (param1)", 50)
         param2 = _prompt_int("Accumulator threshold (param2)", 30)
-        return CircleTracker(min_radius=min_radius, max_radius=max_radius, 
+        return CircleTracker(min_radius=min_radius, max_radius=max_radius,
                            param1=param1, param2=param2)
     if choice == "7": # PHONE TRACKER
         confidence = _prompt_float("Detection confidence threshold", 0.5)
@@ -57,7 +57,7 @@ def select_tracker(tello_connector):
         max_area = _prompt_int("Maximum area for phone detection", 50000)
         min_ar = _prompt_float("Minimum aspect ratio (width/height)", 1.5)
         max_ar = _prompt_float("Maximum aspect ratio (width/height)", 3.0)
-        return SimplePhoneTracker(min_area=min_area, max_area=max_area, 
+        return SimplePhoneTracker(min_area=min_area, max_area=max_area,
                                 aspect_ratio_range=(min_ar, max_ar))
     # default
     return ArucoTracker()

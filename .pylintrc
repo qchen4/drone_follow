@@ -1,0 +1,47 @@
+[MASTER]
+# Add the current directory to the Python path
+init-hook='import sys; sys.path.append(".")'
+
+# Disable some checks that are too strict for this project
+disable=
+    # Import errors (false positives due to module structure)
+    import-error,
+    # Some style issues that are acceptable
+    too-many-locals,
+    too-many-branches,
+    too-many-statements,
+    # Naming conventions for control parameters (Kp, Ki, Kd are standard)
+    invalid-name,
+    # Protected access (needed for some design patterns)
+    protected-access,
+    # Unused imports (some are needed for type hints)
+    unused-import,
+    # Unused variables (some are needed for debugging)
+    unused-variable
+
+[FORMAT]
+# Maximum number of characters on a single line
+max-line-length=120
+
+[MESSAGES CONTROL]
+# Disable specific messages that are not relevant
+disable=
+    # Duplicate code (some duplication is acceptable for clarity)
+    duplicate-code,
+    # Too many return statements (acceptable for some functions)
+    too-many-return-statements
+
+[REPORTS]
+# Set the output format
+output-format=text
+
+# Include the score in the report
+score=yes
+
+[BASIC]
+# Good variable names regex
+good-names=i,j,k,ex,Run,_,Kp,Ki,Kd
+
+[SIMILARITIES]
+# Minimum lines for duplicate code detection
+min-similarity-lines=10 

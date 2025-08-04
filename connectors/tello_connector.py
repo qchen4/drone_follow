@@ -42,7 +42,7 @@ class TelloConnector:  # pylint: disable=too-few-public-methods
     def connect(self) -> None:
         """Connect, start stream, and optionally record telemetry logs."""
         logging.info("Connecting to Tello …")
-        
+
         # Initialize Tello with retry logic
         for attempt in range(3):
             try:
@@ -50,12 +50,12 @@ class TelloConnector:  # pylint: disable=too-few-public-methods
                 self.tello.connect()
                 battery = self.tello.get_battery()
                 logging.info("Tello battery: %s%%", battery)
-                
+
                 if battery < 20:
                     logging.warning("Low battery! Consider charging before flight.")
-                
+
                 break  # Success, exit retry loop
-                
+
             except OSError as e:
                 if "Address already in use" in str(e):
                     logging.error(f"Connection attempt {attempt + 1} failed: Port already in use")
@@ -84,10 +84,10 @@ class TelloConnector:  # pylint: disable=too-few-public-methods
             try:
                 self.tello.streamon()
                 time.sleep(1)  # Wait for stream to initialize
-                
+
                 self.frame_read = self.tello.get_frame_read()
                 time.sleep(0.5)  # Wait for frame reader
-                
+
                 # Test if we can get a frame
                 test_frame = self.frame_read.frame
                 if test_frame is not None:
@@ -95,10 +95,10 @@ class TelloConnector:  # pylint: disable=too-few-public-methods
                     break
                 else:
                     logging.warning(f"Stream attempt {attempt + 1}: No frames received")
-                    
+
             except Exception as e:
                 logging.warning(f"Stream attempt {attempt + 1} failed: {e}")
-                
+
             if attempt < 2:
                 logging.info("Retrying stream startup...")
                 time.sleep(1)

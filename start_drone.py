@@ -29,21 +29,21 @@ def main():
     """Main startup function."""
     print("Drone Application Startup")
     print("=" * 30)
-    
+
     # Check if we're in the right directory
     if not os.path.exists('main.py'):
         print("❌ Error: main.py not found. Please run this script from the drone_project directory.")
         sys.exit(1)
-    
+
     # Run cleanup
     if not run_cleanup():
         print("❌ Cleanup failed. Please run manually: python3 utils/tello_cleanup.py")
         sys.exit(1)
-    
+
     print("\n" + "=" * 30)
     print("Starting drone application...")
     print("=" * 30)
-    
+
     # Start the main application
     try:
         subprocess.run([sys.executable, 'main.py'], check=True)
@@ -57,4 +57,4 @@ def main():
         sys.exit(1)
 
 if __name__ == "__main__":
-    main() 
+    main()
