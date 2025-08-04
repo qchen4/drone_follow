@@ -2,6 +2,7 @@ from .base_tracker import TrackerBase
 from .mission_pad_tracker import MissionPadTracker
 from .color_patch_tracker import ColorPatchTracker
 from .aruco_tracker import ArucoTracker
+from .precision_aruco_tracker import PrecisionArucoTracker
 from .circle_tracker import CircleTracker
 from .phone_tracker import PhoneTracker
 from .simple_phone_tracker import SimplePhoneTracker
@@ -14,6 +15,7 @@ __all__: list[str] = [
     "LightRectTracker",
     "DarkRectTracker",
     "ArucoTracker",
+    "PrecisionArucoTracker",
     "CircleTracker",
     "PhoneTracker",
     "SimplePhoneTracker",

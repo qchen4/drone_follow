@@ -181,12 +181,31 @@ class TelloTargetFollower:
     def _land_and_cleanup(self):
         logging.info("Initiating landing protocol.")
         try:
+            # kick off the landing sequence
             if self.frame_read:
                 self.landing_protocol.land(self.tello, frame_read=self.frame_read)
             else:
                 self.landing_protocol.land(self.tello)
 
+            # while landing is still in progress, keep updating the visual feed
+            while not getattr(self.landing_protocol, "finished", True):
+                frame = self.tello_connector.frame_read.frame
+                if frame is not None:
+                    h, w = frame.shape[:2]
+                    crop_h = min(240, h)
+                    crop_w = min(320, w)
+                    cropped = frame[0:crop_h, 0:crop_w]
+                    transposed = cv2.transpose(cropped)
+                    self._draw_cross(transposed)
+                    debug = {"status": "LANDING", "previews": []}
+                    if self.visual_thread.is_alive():
+                        self.visual_thread.frame = transposed
+                        self.visual_thread.debug = debug
+                time.sleep(0.05)
+
+            # once landing is done, clean up
             self.tello_connector.cleanup()
+
 
         except Exception as cleanup_error:
             logging.exception(f"Error during cleanup: {cleanup_error}")
@@ -196,14 +215,44 @@ class TelloTargetFollower:
                 self.visual_thread.stop()
                 self.visual_thread.join()
             logging.info("Cleanup completed.")
+  
+        
+  
+
+
 
     def _takeoff_and_stabilize(self):
         logging.info("Drone taking off...")
         self.tello.takeoff()
-        time.sleep(0.1)
-        self.tello.move('up', self.takeoff_height)
-        time.sleep(0.3)
-        logging.info(f"Drone stabilized at {self.takeoff_height}cm.")
+        start = time.time()
+        ascend_sent = False
+        # loop for ~3 s: send the 'up' command once, then keep updating the view
+        while time.time() - start < 3.0:
+            if not ascend_sent and time.time() - start > 0.1:
+                self.tello.move('up', self.takeoff_height)
+                ascend_sent = True
+
+            # get a frame from the stream
+            frame = self.tello_connector.frame_read.frame
+            if frame is not None:
+                # reuse the same cropping/transposition you do in _get_frame()
+                h, w = frame.shape[:2]
+                crop_h = min(240, h)
+                crop_w = min(320, w)
+                cropped = frame[0:crop_h, 0:crop_w]
+                transposed = cv2.transpose(cropped)
+                # draw the centre cross
+                self._draw_cross(transposed)
+                # minimal debug info for take‑off phase
+                debug = {"status": "TAKEOFF", "previews": []}
+                if self.visual_thread.is_alive():
+                    self.visual_thread.frame = transposed
+                    self.visual_thread.debug = debug
+            time.sleep(0.05)
+
+        logging.info(f"Drone stabilized at {self.takeoff_height} cm.")
+
+
 
     def _draw_cross(self, frame):
         h, w = frame.shape[:2]
