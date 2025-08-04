@@ -17,26 +17,131 @@ from utils.setup_utils import (
     configure_landing,
     select_visual_protocol
 )
+from utils.tello_cleanup import check_drone_state, handle_motor_stop_error, safe_land
+from utils.config_manager import ConfigManager
+from utils.config_factory import create_components_from_config
 from control_protocols.pid_control import PIDControl
 
 def main():
     setup_logger()
     logging.info("Drone application initialized.")
 
-    tello_connector = TelloConnector()
-    tello_connector.connect()
+    # Initialize configuration manager
+    config_manager = ConfigManager()
+    
+    # Ask user for configuration preference
+    print("\n" + "="*50)
+    print("DRONE CONFIGURATION")
+    print("="*50)
+    print("1. Use configuration file (recommended)")
+    print("2. Interactive setup (manual input)")
+    print("3. Create new configuration file")
+    print("4. List available configurations")
+    
+    choice = input("\nSelect option (1-4) [1]: ").strip() or "1"
+    
+    if choice == "1":
+        # Use configuration file
+        configs = config_manager.list_configs()
+        if not configs:
+            print("No configuration files found. Creating default configuration...")
+            config = config_manager.load_config("default")
+        else:
+            print(f"\nAvailable configurations: {', '.join(configs)}")
+            config_name = input(f"Enter config name [{configs[0]}]: ").strip() or configs[0]
+            config = config_manager.load_config(config_name)
+        
+        # Create components from config
+        tello_connector = TelloConnector()
+        tello_connector.connect()
+        
+        tracker, control_protocol, visual_protocol, landing_protocol, drone_settings = create_components_from_config(config, tello_connector)
+        
+        # Apply drone settings
+        takeoff_height = drone_settings.get("takeoff_height", 30)
+        target_height = drone_settings.get("target_height", 30)
+        timeout = drone_settings.get("timeout", 40)
+        
+        # Set camera mode based on configuration
+        camera_mode = drone_settings.get("camera_mode", "downward")
+        if camera_mode == "downward":
+            tello_connector.set_downward_camera()
+            logging.info("Downward camera activated")
+        elif camera_mode == "front":
+            tello_connector.set_front_camera()
+            logging.info("Front camera activated")
+        else:
+            logging.warning(f"Unknown camera mode: {camera_mode}, using default (downward)")
+            tello_connector.set_downward_camera()
+        
+    elif choice == "2":
+        # Interactive setup (original behavior)
+        tello_connector = TelloConnector()
+        tello_connector.connect()
 
-    tracker: TrackerBase = select_tracker(tello_connector)
-    control_protocol: DroneControlLaw = select_control_protocol()
-    visual_protocol: VisualProtocol = select_visual_protocol()
-    landing_protocol: LandingProtocolBase = configure_landing(tracker, control_protocol, visual_protocol)
+        tracker: TrackerBase = select_tracker(tello_connector)
+        control_protocol: DroneControlLaw = select_control_protocol()
+        visual_protocol: VisualProtocol = select_visual_protocol()
+        landing_protocol: LandingProtocolBase = configure_landing(tracker, control_protocol, visual_protocol)
+        
+        # Camera mode selection for interactive setup
+        print("\n✔  Camera mode: 1) Downward (recommended for landing)  2) Front")
+        camera_choice = input("Select 1/2 [1]: ").strip() or "1"
+        if camera_choice == "2":
+            tello_connector.set_front_camera()
+            logging.info("Front camera activated")
+        else:
+            tello_connector.set_downward_camera()
+            logging.info("Downward camera activated")
+        
+        takeoff_height = 30
+        target_height = 30
+        timeout = 40
+        
+    elif choice == "3":
+        # Create new configuration
+        from utils.config_manager import create_config_from_user_input
+        config = create_config_from_user_input()
+        
+        config_name = input("Enter name for new configuration: ").strip()
+        if not config_name:
+            config_name = "user"
+        
+        config_manager.save_config(config, config_name)
+        print(f"Configuration saved as '{config_name}.json'")
+        
+        # Use the new configuration
+        tello_connector = TelloConnector()
+        tello_connector.connect()
+        
+        tracker, control_protocol, visual_protocol, landing_protocol, drone_settings = create_components_from_config(config, tello_connector)
+        
+        takeoff_height = drone_settings.get("takeoff_height", 30)
+        target_height = drone_settings.get("target_height", 30)
+        timeout = drone_settings.get("timeout", 40)
+        
+    elif choice == "4":
+        # List configurations
+        configs = config_manager.list_configs()
+        if configs:
+            print(f"\nAvailable configurations: {', '.join(configs)}")
+        else:
+            print("No configuration files found.")
+        return
+        
+    else:
+        print("Invalid choice. Exiting.")
+        return
 
     follower = TelloTargetFollower(
         tello_connector,
         tracker,
         landing_protocol,
         control_protocol,
-        visual_protocol
+        visual_protocol,
+        takeoff_height=takeoff_height,
+        target_height=target_height,
+        timeout=timeout
     )
 
     input("\nReady to fly! Press Enter to start the mission...")
@@ -181,6 +286,10 @@ class TelloTargetFollower:
     def _land_and_cleanup(self):
         logging.info("Initiating landing protocol.")
         try:
+            # Check drone state before landing
+            state = check_drone_state(self.tello)
+            logging.info(f"Pre-landing drone state: {state}")
+            
             # kick off the landing sequence
             if self.frame_read:
                 self.landing_protocol.land(self.tello, frame_read=self.frame_read)
@@ -206,9 +315,14 @@ class TelloTargetFollower:
             # once landing is done, clean up
             self.tello_connector.cleanup()
 
-
         except Exception as cleanup_error:
             logging.exception(f"Error during cleanup: {cleanup_error}")
+            # Try safe landing as fallback
+            try:
+                logging.info("Attempting safe landing as fallback...")
+                safe_land(self.tello)
+            except Exception as safe_land_error:
+                logging.error(f"Safe landing also failed: {safe_land_error}")
 
         finally:
             if self.visual_thread.is_alive():

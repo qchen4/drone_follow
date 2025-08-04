@@ -23,6 +23,7 @@ class MultiLayerLanding(LandingProtocolBase):
         self.visual_protocol = visual_protocol
 
     def land(self, tello, frame_read=None, visual_protocol=None, **kwargs):
+        self.finished = False  # mark start of landing
         visual_protocol = visual_protocol or self.visual_protocol
         logging.info(f"Landing in {self.layers} steps of {self.layer_height}cm each.")
         for layer in range(self.layers):
@@ -30,6 +31,7 @@ class MultiLayerLanding(LandingProtocolBase):
             self._descend_layer(tello, aligned)
         logging.info("Final landing executed.")
         tello.land()
+        self.finished = True   # mark completion
 
     def _descend_layer(self, tello, aligned):
         tello.send_rc_control(0, 0, 0, 0)
@@ -43,7 +45,35 @@ class MultiLayerLanding(LandingProtocolBase):
                 time.sleep(1)
         except Exception as e:
             logging.error(f"Descending failed: {e}. Falling back to direct land.")
-            tello.land()
+            # Check if it's a motor stop error
+            if "Motor stop" in str(e) or "error Motor stop" in str(e):
+                logging.warning("Motor stop error detected. Checking drone state...")
+                # Import the motor stop handler
+                try:
+                    from utils.tello_cleanup import check_drone_state, handle_motor_stop_error
+                    state = check_drone_state(tello)
+                    logging.info(f"Drone state during motor stop: {state}")
+                    
+                    if handle_motor_stop_error(tello, "down"):
+                        # Try to land directly
+                        try:
+                            tello.land()
+                        except Exception as land_error:
+                            logging.error(f"Direct land also failed: {land_error}")
+                    else:
+                        logging.error("Cannot proceed with motor stop error")
+                except ImportError:
+                    logging.warning("Motor stop handler not available, trying direct land")
+                    try:
+                        tello.land()
+                    except Exception as land_error:
+                        logging.error(f"Direct land failed: {land_error}")
+            else:
+                # Not a motor stop error, try direct land
+                try:
+                    tello.land()
+                except Exception as land_error:
+                    logging.error(f"Direct land failed: {land_error}")
         time.sleep(0.3)
 
     def is_stable_imu(self, tello, accel_threshold=0.1):
