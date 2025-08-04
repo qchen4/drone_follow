@@ -1,5 +1,7 @@
 # Tello Autonomous Flight Framework
 
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/username/repository)
+
 A modular Python project for vision‑guided autonomous flight, precision landing, and data logging on DJI Tello / Tello EDU drones.
 
 ---

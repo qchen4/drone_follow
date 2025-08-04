@@ -276,11 +276,22 @@ class TelloTargetFollower:
             state = check_drone_state(self.tello)
             logging.info(f"Pre-landing drone state: {state}")
             
-            # kick off the landing sequence
+            # --- Kick off landing sequence in a background thread so GUI keeps updating ---
+            import threading
             if self.frame_read:
-                self.landing_protocol.land(self.tello, frame_read=self.frame_read)
+                landing_thread = threading.Thread(
+                    target=self.landing_protocol.land,
+                    args=(self.tello,),
+                    kwargs={"frame_read": self.frame_read},
+                    daemon=True,
+                )
             else:
-                self.landing_protocol.land(self.tello)
+                landing_thread = threading.Thread(
+                    target=self.landing_protocol.land,
+                    args=(self.tello,),
+                    daemon=True,
+                )
+            landing_thread.start()
 
             # while landing is still in progress, keep updating the visual feed
             while not getattr(self.landing_protocol, "finished", True):
@@ -296,7 +307,12 @@ class TelloTargetFollower:
                     if self.visual_thread.is_alive():
                         self.visual_thread.frame = transposed
                         self.visual_thread.debug = debug
+                    # Update OpenCV window in main thread during landing
+                    if hasattr(self.visual_protocol, '_display_frame'):
+                        self.visual_protocol._display_frame()
                 time.sleep(0.05)
+
+            landing_thread.join()
 
             # once landing is done, clean up
             self.tello_connector.cleanup()

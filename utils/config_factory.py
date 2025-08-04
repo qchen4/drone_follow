@@ -12,20 +12,25 @@ def create_tracker_from_config(tracker_type: str, parameters: Dict[str, Any], te
             from trackers.circle_tracker import CircleTracker
             # Map configuration parameters to CircleTracker constructor parameters
             mapped_params = {}
-            if "min_area" in parameters and "max_radius" in parameters:
-                # Convert radius-based parameters to area-based
-                min_area = parameters.get("min_area", 200)
+            if "min_area" in parameters and "max_area" in parameters:
+                # Use area-based parameters directly
+                min_area = parameters.get("min_area", 100)
+                max_area = parameters.get("max_area", 8000)
+                mapped_params["area_range"] = (min_area, max_area)
+            elif "min_area" in parameters and "max_radius" in parameters:
+                # Convert radius-based parameters to area-based (backward compatibility)
+                min_area = parameters.get("min_area", 100)
                 max_area = int(3.14159 * parameters.get("max_radius", 500) ** 2)  # π * r²
                 mapped_params["area_range"] = (min_area, max_area)
             elif "area_range" in parameters:
                 mapped_params["area_range"] = parameters["area_range"]
             else:
-                mapped_params["area_range"] = (50, 5000)  # Default
+                mapped_params["area_range"] = (100, 8000)  # Default
             
             if "min_circularity" in parameters:
                 mapped_params["circularity_min"] = parameters["min_circularity"]
             else:
-                mapped_params["circularity_min"] = 0.8  # Default
+                mapped_params["circularity_min"] = 0.6  # Default
             
             return CircleTracker(**mapped_params)
         elif tracker_type == "aruco":
@@ -124,7 +129,7 @@ def create_visual_protocol_from_config(visual_type: str, parameters: Dict[str, A
         elif visual_type == "logger":
             from visual_protocols.logger_visual import LoggerVisualProtocol
             return LoggerVisualProtocol()
-        elif visual_type == "grid":
+        elif visual_type in ("grid", "grid_visual", "gridvisual"):
             from visual_protocols.grid_visual import GridVisualProtocol
             # Map configuration parameters to GridVisualProtocol constructor parameters
             mapped_params = {}

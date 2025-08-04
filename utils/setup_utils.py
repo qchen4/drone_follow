@@ -46,14 +46,10 @@ def select_tracker(tello_connector):
         marker_size = _prompt_float("ArUco marker size (cm)", 15.0)
         return PrecisionArucoTracker(marker_size=marker_size)
     if choice == "7":
-        # Ask for radii but derive areas
-        min_radius = _prompt_int("Min circle radius (pixels)", 20)
-        max_radius = _prompt_int("Max circle radius (pixels)", 100)
-        circularity_min = _prompt_float("Minimum circularity (0.0–1.0)", 0.8)
-
-        # derive area range: area ≈ πr², with some slack
-        min_area = int(math.pi * min_radius**2 * 0.3)  # conservative lower bound
-        max_area = int(math.pi * max_radius**2 * 3.0)  # liberal upper bound
+        # Ask for area range directly for better control
+        min_area = _prompt_int("Min circle area (pixels)", 100)
+        max_area = _prompt_int("Max circle area (pixels)", 8000)
+        circularity_min = _prompt_float("Minimum circularity (0.0–1.0)", 0.6)
 
         return CircleTracker(area_range=(min_area, max_area),
                             circularity_min=circularity_min)
