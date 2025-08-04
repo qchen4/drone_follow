@@ -3,6 +3,8 @@
 A modular Python project for vision‑guided autonomous flight, precision landing, and data logging on DJI Tello / Tello EDU drones.
 
 ---
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/username/repository)
+
 
 ## ✨ Features
 
