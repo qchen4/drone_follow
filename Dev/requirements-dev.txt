@@ -1,0 +1,7 @@
+# Dev / CI tooling
+pytest==8.1.1
+pytest-mock==3.14.0
+coverage==7.5.3
+black==24.4.2
+ruff==0.4.5          # fast linter / formatter
+pre-commit==3.7.1

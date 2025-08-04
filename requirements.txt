@@ -1,0 +1,6 @@
+# Core runtime
+djitellopy==2.5.0
+opencv-contrib-python==4.9.0.80
+numpy==1.26.4
+supervision==0.20.0
+ultralytics==8.0.196
