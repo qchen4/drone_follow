@@ -3,7 +3,7 @@ Interactive helper-prompts that keep main.py clean.
 """
 
 import logging
-
+import math
 # ── Generic prompt helpers ────────────────────────────────────────────────────
 def _prompt_int(msg: str, default: int) -> int:
     val = input(f"{msg} [{default}]: ").strip()
@@ -41,13 +41,18 @@ def select_tracker(tello_connector):
     if choice == "5":
         return ArucoTracker()
     if choice == "6":
-        # Configure circle tracker parameters
-        min_radius = _prompt_int("Min circle radius", 20)
-        max_radius = _prompt_int("Max circle radius", 100)
-        param1 = _prompt_int("Edge detection sensitivity (param1)", 50)
-        param2 = _prompt_int("Accumulator threshold (param2)", 30)
-        return CircleTracker(min_radius=min_radius, max_radius=max_radius,
-                           param1=param1, param2=param2)
+        # Ask for radii but derive areas
+        min_radius = _prompt_int("Min circle radius (pixels)", 20)
+        max_radius = _prompt_int("Max circle radius (pixels)", 100)
+        circularity_min = _prompt_float("Minimum circularity (0.0–1.0)", 0.8)
+
+        # derive area range: area ≈ πr², with some slack
+        min_area = int(math.pi * min_radius**2 * 0.3)  # conservative lower bound
+        max_area = int(math.pi * max_radius**2 * 3.0)  # liberal upper bound
+
+        return CircleTracker(area_range=(min_area, max_area),
+                            circularity_min=circularity_min)
+
     if choice == "7": # PHONE TRACKER
         confidence = _prompt_float("Detection confidence threshold", 0.5)
         iou_threshold = _prompt_float("IoU threshold for NMS", 0.5)
