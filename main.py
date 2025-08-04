@@ -62,17 +62,9 @@ def main():
         target_height = drone_settings.get("target_height", 30)
         timeout = drone_settings.get("timeout", 40)
         
-        # Set camera mode based on configuration
-        camera_mode = drone_settings.get("camera_mode", "downward")
-        if camera_mode == "downward":
-            tello_connector.set_downward_camera()
-            logging.info("Downward camera activated")
-        elif camera_mode == "front":
-            tello_connector.set_front_camera()
-            logging.info("Front camera activated")
-        else:
-            logging.warning(f"Unknown camera mode: {camera_mode}, using default (downward)")
-            tello_connector.set_downward_camera()
+        # Always use downward-facing 320×240 optical-flow camera
+        tello_connector.set_downward_camera()
+        logging.info("Downward-facing 320×240 optical-flow camera activated")
         
     elif choice == "2":
         # Interactive setup (original behavior)
@@ -84,15 +76,9 @@ def main():
         visual_protocol: VisualProtocol = select_visual_protocol()
         landing_protocol: LandingProtocolBase = configure_landing(tracker, control_protocol, visual_protocol)
         
-        # Camera mode selection for interactive setup
-        print("\n✔  Camera mode: 1) Downward (recommended for landing)  2) Front")
-        camera_choice = input("Select 1/2 [1]: ").strip() or "1"
-        if camera_choice == "2":
-            tello_connector.set_front_camera()
-            logging.info("Front camera activated")
-        else:
-            tello_connector.set_downward_camera()
-            logging.info("Downward camera activated")
+        # Always use downward-facing 320×240 optical-flow camera
+        tello_connector.set_downward_camera()
+        logging.info("Downward-facing 320×240 optical-flow camera activated")
         
         takeoff_height = 30
         target_height = 30

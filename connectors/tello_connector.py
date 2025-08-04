@@ -26,7 +26,7 @@ class TelloConnector:  # pylint: disable=too-few-public-methods
     >>> tc.cleanup()
     """
 
-    #: region‑of‑interest cropping (front camera is 720p; we crop top‑left
+    #: region‑of‑interest cropping (downward camera is 320×240 optical-flow; we crop top‑left
     CROPPED_H = 240
     CROPPED_W = 320
 
@@ -115,9 +115,9 @@ class TelloConnector:  # pylint: disable=too-few-public-methods
     # ──────────────────────────────────────────────────────────────────
 
     def set_downward_camera(self) -> None:
-        """Switch to the ground‑facing camera (Tello EDU only)."""
+        """Switch to the downward-facing 320×240 optical-flow camera (Tello EDU only)."""
         self.tello.send_command_with_return("downvision 1")
-        logging.debug("Downward camera active.")
+        logging.debug("Downward-facing 320×240 optical-flow camera active.")
 
     def set_front_camera(self) -> None:
         self.tello.send_command_with_return("downvision 0")
@@ -143,7 +143,7 @@ class TelloConnector:  # pylint: disable=too-few-public-methods
     # ──────────────────────────────────────────────────────────────────
 
     def get_frame(self, crop_to_roi: bool = True) -> Optional[cv2.Mat]:
-        """Return the latest video frame, optionally cropped to 320×240."""
+        """Return the latest video frame from the downward-facing 320×240 optical-flow camera, optionally cropped to 320×240."""
         frame = None if self.frame_read is None else self.frame_read.frame
         if frame is not None and crop_to_roi:
             frame = frame[0 : self.CROPPED_H, 0 : self.CROPPED_W]

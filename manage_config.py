@@ -291,14 +291,8 @@ def edit_drone_settings(config):
             except ValueError:
                 print(f"Invalid value for {param}, keeping current value.")
     
-    # Camera mode selection
-    current_camera = drone_settings.get("camera_mode", "downward")
-    print(f"\nCamera mode options: downward, front")
-    new_camera = input(f"  camera_mode [{current_camera}]: ").strip()
-    if new_camera and new_camera in ["downward", "front"]:
-        drone_settings["camera_mode"] = new_camera
-    elif new_camera:
-        print("Invalid camera mode, keeping current value.")
+    # Camera mode is always downward-facing 320×240 optical-flow camera
+    print("\nCamera mode: Always downward-facing 320×240 optical-flow camera (not configurable)")
     
     config["drone_settings"] = drone_settings
 

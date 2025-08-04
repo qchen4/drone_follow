@@ -69,8 +69,7 @@ Each configuration file contains the following sections:
   "drone_settings": {
     "takeoff_height": 30,
     "target_height": 30,
-    "timeout": 40,
-    "camera_mode": "downward"
+    "timeout": 40
   }
 }
 ```
@@ -78,10 +77,7 @@ Each configuration file contains the following sections:
 ## Available Options
 
 ### Camera Mode
-- **downward**: Ground-facing camera (recommended for landing and precision operations)
-- **front**: Forward-facing camera (good for general navigation)
-
-**Note**: The downward camera is only available on Tello EDU models. If you're using a regular Tello, the system will automatically fall back to the front camera.
+The system always uses the **downward-facing 320×240 optical-flow camera** for optimal landing and precision operations. This camera mode is not configurable and is automatically activated on startup.
 
 ### Tracker Types
 - `circle`: Circle detection tracker

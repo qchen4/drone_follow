@@ -299,6 +299,5 @@ def _extract_drone_settings():
     return {
         "takeoff_height": 30,
         "target_height": 30,
-        "timeout": 40,
-        "camera_mode": "downward"
+        "timeout": 40
     } 
