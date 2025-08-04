@@ -76,7 +76,9 @@ class TelloTargetFollower:
             self._takeoff_and_stabilize()
             start_time = time.time()
             self.frame_read = self.tello_connector.frame_read
-
+            for _ in range(10):
+                _ = self.frame_read.frame
+                time.sleep(0.05)
             while self.running:
                 frame = self._get_frame()
                 if frame is None:

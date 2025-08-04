@@ -34,12 +34,16 @@ class MultiLayerLanding(LandingProtocolBase):
     def _descend_layer(self, tello, aligned):
         tello.send_rc_control(0, 0, 0, 0)
         time.sleep(0.1)
-        if self.is_stable_imu(tello):
-            logging.info(f"Stable IMU. Descending {self.layer_height}cm.")
-            tello.move('down', self.layer_height)
-        else:
-            logging.warning("IMU instability detected, delaying descent.")
-            time.sleep(1)
+        try:
+            if self.is_stable_imu(tello):
+                logging.info(f"Stable IMU. Descending {self.layer_height}cm.")
+                tello.move('down', self.layer_height)
+            else:
+                logging.warning("IMU instability detected, delaying descent.")
+                time.sleep(1)
+        except Exception as e:
+            logging.error(f"Descending failed: {e}. Falling back to direct land.")
+            tello.land()
         time.sleep(0.3)
 
     def is_stable_imu(self, tello, accel_threshold=0.1):
